@@ -1,74 +1,90 @@
+// ---------- Global Variables -----------
+
+let empty = '';
+
 // ----------- Dom Elements ------------------
+
 let buttons = document.querySelectorAll('.calculator__button');
 let screen = document.getElementById('calcScreen');
+let operatorButtons = document.querySelectorAll('[data-operator]');
 
 // ------------- State ---------------
 
 let calcState = {
     operatorPressed: false,
     operatorPressedCount: 0,
-    firstOperand: null,
-    secondOperand: 0,
+    firstOperand: empty,
+    secondOperand: empty,
     operator: null,
-    calculate: function(){
-      if(this.operator === '+'){
-          return this.firstOperand + this.secondOperand;
-      }else if(this.operator === '-'){
-        return this.firstOperand - this.secondOperand;
-      }else if(this.operator === '/'){
-        return this.firstOperand / this.secondOperand;
-      }else{
-        return this.firstOperand * this.secondOperand;
-      }
-    }
+    calculate  // <<------ Function - declaration at bottom
 };
 
-// -------- Main Program
+// -------- Main Program ---------
 
 buttons.forEach(item => {
     item.addEventListener('click', handleButtonPress)
 })
 
 function handleButtonPress(event){
-    if(event.target.dataset.operator && calcState.operatorPressedCount === 0){
-        handleFirstOperatorPress(event);
-    }else if(event.target.dataset.operator && calcState.operatorPressedCount === 1){
-        handleSecondOperatorPress(event);
+    if(event.target.dataset.operator){
+        handleOperatorPress(event);
+    
     }else{
         handleNumberPress(event);
-    }
+    }  
+    console.log(calcState)
 }
 
 // ------------------- Function Declarations -----------
 
-function handleSecondOperatorPress(event){
-    toggleButtonBackground(event);
-    let result = calcState.calculate();
-    screen.innerText = result;
+function handleOperatorPress(event){
+    if(calcState.firstOperand === empty){
+        return;
+    };
+    if(event.target.dataset.operator === 'equals'){
+        calcState.calculate()
+        return
+    };
+    if(event.target.dataset.operator === 'clear'){
+        calcState = {
+            operatorPressed: false,
+            operatorPressedCount: 0,
+            firstOperand: empty,
+            secondOperand: empty,
+            operator: null,
+            calculate  
+        }
+        screen.innerText = '';
+        return;
+    };
+    if(calcState.operatorPressed){
+        toggleButtonBackground(event);
+        setOperator(event);
+        if(calcState.seconOperand){
+            calcState.calculate();
+        }
+        }else{
+            toggleButtonBackground(event);
+            calcState.operatorPressed = true;
+            calcState.operatorPressedCount++;
+            setOperator(event);
+     }
+
 };
 
-function handleFirstOperatorPress(event){
-    if(calcState.firstOperand === null){
-        return;
-    }
-    toggleButtonBackground(event);
-    screen.innerText = '';  
-    calcState.operatorPressed = true;
-    calcState.operatorPressedCount++;
-    checkOperator(event)
-}
-
 function handleNumberPress(event){
+    if(calcState.operatorPressed && calcState.secondOperand === empty){
+        screen.innerText = '';
+    };
     if(calcState.operatorPressed === false){
-        calcState.firstOperand += +event.target.innerText
+        displayFirstOperand(event);
     }else{
-        calcState.secondOperand += +event.target.innerText
+        removeActiveOperators();
+        displaySecondOperand(event);
     }
-    screen.innerText = screen.innerText + event.target.innerText;
-    console.log(calcState)
 }
 
-function checkOperator(event){
+function setOperator(event){
     switch(event.target.dataset.operator) {
         case 'add':
           calcState.operator = '+';
@@ -83,11 +99,52 @@ function checkOperator(event){
             calcState.operator = '/';
           break;
         default:
-          // code block
+            calcState.operator = '=';
       }
 }
 
+function removeActiveOperators(){
+    operatorButtons.forEach(item => {
+        item.classList.remove('button__active');
+    })
+}
 
 function toggleButtonBackground(event){
     event.target.classList.toggle('button__active');
+}
+
+function displaySecondOperand(event){
+    
+    calcState.secondOperand += event.target.innerText;
+    screen.innerText += event.target.innerText;
+}
+
+function displayFirstOperand(event){
+    calcState.firstOperand += event.target.innerText;
+    screen.innerText += event.target.innerText;
+}
+
+function calculate(){
+    let firstOperand = +this.firstOperand;
+    let secondOperand = +this.secondOperand;
+    let operator = this.operator
+    let result;
+
+    if(operator === '+'){
+        result = firstOperand + secondOperand;
+    }else if(operator === '-'){
+        result = firstOperand - secondOperand;
+    }else if(operator === '/'){
+        result = firstOperand / secondOperand;
+    }else{
+        result = firstOperand * secondOperand;
+        } 
+
+    displayResult(result);
+}
+
+function displayResult(result){
+    screen.innerText = result;
+    calcState.firstOperand = result;
+    calcState.secondOperand = empty;
 }
