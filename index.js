@@ -1,5 +1,4 @@
 // ---------- Global Variables -----------
-
 let empty = '';
 
 // ----------- Dom Elements ------------------
@@ -7,69 +6,67 @@ let empty = '';
 let buttons = document.querySelectorAll('.calculator__button');
 let screen = document.getElementById('calcScreen');
 let operatorButtons = document.querySelectorAll('[data-operator]');
+let modal = document.getElementById('modal');
+let modalContainer = document.getElementById('modal-container');
 
 // ------------- State ---------------
 
 let calcState = {
     operatorPressed: false,
-    operatorPressedCount: 0,
     firstOperand: empty,
     secondOperand: empty,
     operator: null,
     calculate  // <<------ Function - declaration at bottom
 };
 
-// -------- Main Program ---------
+// -------- Event Listners  ---------
 
 buttons.forEach(item => {
     item.addEventListener('click', handleButtonPress)
 })
 
+modalContainer.addEventListener('click', removeModal);
+
+
+
+// ------------------- Function Declarations -----------
+
+
 function handleButtonPress(event){
     if(event.target.dataset.operator){
         handleOperatorPress(event);
     
+    }else if(event.target.dataset.equals){
+        calcState.secondOperand && calcState.calculate();
+        return;
+
+    }else if(event.target.dataset.clear){
+        clear();
+          
     }else{
         handleNumberPress(event);
+
     }  
     console.log(calcState)
 }
-
-// ------------------- Function Declarations -----------
 
 function handleOperatorPress(event){
     if(calcState.firstOperand === empty){
         return;
     };
-    if(event.target.dataset.operator === 'equals'){
-        calcState.calculate()
-        return
-    };
-    if(event.target.dataset.operator === 'clear'){
-        calcState = {
-            operatorPressed: false,
-            operatorPressedCount: 0,
-            firstOperand: empty,
-            secondOperand: empty,
-            operator: null,
-            calculate  
-        }
-        screen.innerText = '';
-        return;
-    };
     if(calcState.operatorPressed){
+        removeActiveOperators();
         toggleButtonBackground(event);
-        setOperator(event);
-        if(calcState.seconOperand){
+       
+        if(calcState.secondOperand){
             calcState.calculate();
         }
         }else{
             toggleButtonBackground(event);
             calcState.operatorPressed = true;
-            calcState.operatorPressedCount++;
             setOperator(event);
      }
-
+         setOperator(event);
 };
 
 function handleNumberPress(event){
@@ -114,7 +111,6 @@ function toggleButtonBackground(event){
 }
 
 function displaySecondOperand(event){
-    
     calcState.secondOperand += event.target.innerText;
     screen.innerText += event.target.innerText;
 }
@@ -130,21 +126,44 @@ function calculate(){
     let operator = this.operator
     let result;
 
+    console.log(operator)
     if(operator === '+'){
         result = firstOperand + secondOperand;
     }else if(operator === '-'){
         result = firstOperand - secondOperand;
     }else if(operator === '/'){
         result = firstOperand / secondOperand;
-    }else{
+        if(result === Infinity){
+            clear();
+            showModal();
+            return 
+        }       
+    }else if(operator === 'x'){
         result = firstOperand * secondOperand;
         } 
 
-    displayResult(result);
-}
-
-function displayResult(result){
     screen.innerText = result;
     calcState.firstOperand = result;
     calcState.secondOperand = empty;
+}
+
+function clear(){
+    calcState = {
+        operatorPressed: false,
+        firstOperand: empty,
+        secondOperand: empty,
+        operator: null,
+        calculate  
+    }
+    screen.innerText = '';
+}
+
+function showModal(){
+    modal.classList.add('active');
+    modalContainer.classList.add('show');
+}
+
+function removeModal(){
+    modal.classList.remove('active');
+    modalContainer.classList.remove('show');
 }
